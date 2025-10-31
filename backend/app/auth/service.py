@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from .model import User, UserRole
+from .models.model import User, UserRole
 from .schema import UserCreate, UserLogin
 from .dependencies import get_password_strength, verify_password, get_password_hash, create_access_token
 from datetime import timedelta

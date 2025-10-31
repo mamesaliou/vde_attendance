@@ -8,15 +8,7 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/school_attendance
-      - DB_HOST=db
-      # - DB_NAME=school_attendance
-      # - DB_USER=user
-      # - DB_PASSWORD=password
-      # - DB_PORT=5432
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.app.rule=Host(`attendance.localhost`)"
+      - DATABASE_URL=${DATABASE_URL}
     networks:
       - web
     # volumes:
@@ -27,7 +19,7 @@ services:
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_DB=school_attendance
-      - POSTGRES_USER=user
+      - POSTGRES status_USER=user
       - POSTGRES_PASSWORD=password
     volumes:
       - postgres_data:/var/lib/postgresql/data  # Volume persistant
@@ -42,25 +34,7 @@ services:
     image: adminer
     container_name: adminer
     ports:
-      - "8080:8080"  # expose Adminer sur http://localhost:8082
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.app.rule=Host(`adminer.localhost`)"
-    networks:
-      - web
-
-  traefik:
-    image: traefik:v2.10
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:82"
-    ports:
-      - "82:82"
-      - "8082:8082"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - "8080:8080" 
     networks:
       - web
 

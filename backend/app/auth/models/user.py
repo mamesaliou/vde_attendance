@@ -1,13 +1,8 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from enum import Enum as PyEnum
-from ..database.database import Base
-
-class UserRole(PyEnum):
-    student = "student"
-    teacher = "teacher"
-    admin = "admin"
+from ...database.database import Base
+from ...auth.models.model import UserRole
 
 class User(Base):
     __tablename__ = "users"

@@ -1,15 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import os
-
 from .database.database import engine, Base
-# from .routes import students, classes, attendance, reports
 from .auth.route import router as auth_router
-from .config import settings
 
-# Créer les tables seulement en production, pas pendant les tests
-if not os.getenv("TESTING"):
-    Base.metadata.create_all(bind=engine)
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="School Attendance API",

@@ -7,7 +7,7 @@ from ..database.database import get_db
 from .schema import UserCreate, UserResponse, Token, UserLogin
 from .service import AuthService
 from .dependencies import get_current_active_user, require_admin, require_teacher_or_admin
-from .model import User
+from .models.model import User
 
 router = APIRouter()
 
