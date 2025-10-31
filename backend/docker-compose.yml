@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/school_attendance
+      - DB_HOST=db
+      # - DB_NAME=school_attendance
+      # - DB_USER=user
+      # - DB_PASSWORD=password
+      # - DB_PORT=5432
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`attendance.localhost`)"
+    networks:
+      - web
+    # volumes:
+    #   - ./app:/app/app  # Hot reload pour le développement
+
+  db:
+    image: postgres:16
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_DB=school_attendance
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Volume persistant
+      - ./backups:/backups  # Dossier pour les sauvegardes
+      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - 5432:5432
+    networks:
+      - web
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    ports:
+      - "8080:8080"  # expose Adminer sur http://localhost:8082
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`adminer.localhost`)"
+    networks:
+      - web
+
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:82"
+    ports:
+      - "82:82"
+      - "8082:8082"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - web
+
+networks:
+  web:
+
+volumes:
+  postgres_data:
