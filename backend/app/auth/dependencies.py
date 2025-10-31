@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from typing import Optional
 import os
 from datetime import datetime, timedelta
-from ..models.models import Class
 from ..database.database import get_db
 from .model import User, UserRole
 from .schema import TokenData
@@ -154,13 +153,6 @@ def require_same_class_or_teacher(class_id: int, current_user: User = Depends(ge
     # Les admins ont accès à tout
     if current_user.role == UserRole.admin.value:
         return current_user
-    
-    # Les enseignants ont accès à leurs classes
-    if current_user.role == UserRole.teacher.value:
-        # Vérifier si l'enseignant enseigne cette classe
-        class_ = current_user.taught_classes.filter(Class.id == class_id).first()
-        if class_:
-            return current_user
     
     # Les étudiants n'ont accès qu'à leur propre classe
     if current_user.role == UserRole.student.value:

@@ -27,8 +27,8 @@ def get_db():
         db.close()
 
 # Importer tous les modèles pour qu'ils soient reconnus par SQLAlchemy
-from ..models.models import Class, Student, Attendance
-from ..auth.model import User
+# from ..models.models import Class, Student, Attendance
+# from ..auth.model import User
 
 # Créer les tables seulement si ce n'est pas un import de test
 if not os.getenv("TESTING"):

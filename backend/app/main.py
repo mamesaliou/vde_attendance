@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 
 from .database.database import engine, Base
-from .routes import students, classes, attendance, reports
+# from .routes import students, classes, attendance, reports
 from .auth.route import router as auth_router
 from .config import settings
 
@@ -30,10 +30,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
-app.include_router(students.router, prefix="/api/students", tags=["students"])
-app.include_router(classes.router, prefix="/api/classes", tags=["classes"])
-app.include_router(attendance.router, prefix="/api/attendance", tags=["attendance"])
-app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
+
 
 @app.get("/")
 async def root():

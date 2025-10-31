@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from ..models.models import Student
 from .model import User, UserRole
 from .schema import UserCreate, UserLogin
 from .dependencies import get_password_strength, verify_password, get_password_hash, create_access_token
@@ -50,34 +49,6 @@ class AuthService:
                 headers={"X-Password-Strength": password_strength["strength"]}
             )
         
-        # Pour les étudiants : vérifier s'il existe un enregistrement étudiant
-        if user_data.role == UserRole.student.value:
-            if user_data.student_id:
-                # Lier à un étudiant existant
-                student = db.query(Student).filter(Student.id == user_data.student_id).first()
-                if not student:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Student record not found"
-                    )
-                # Vérifier que l'email correspond
-                if student.email != user_data.email:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Email does not match student record"
-                    )
-            else:
-                # Créer un nouvel enregistrement étudiant si aucun n'est fourni
-                student = Student(
-                    first_name=user_data.first_name,
-                    last_name=user_data.last_name,
-                    email=user_data.email,
-                    class_id=user_data.class_id
-                )
-                db.add(student)
-                db.flush()  # Pour obtenir l'ID sans commit
-                user_data.student_id = student.id
-        
         # Créer l'utilisateur
         hashed_password = get_password_hash(user_data.password)
         db_user = User(
@@ -86,18 +57,11 @@ class AuthService:
             hashed_password=hashed_password,
             first_name=user_data.first_name,
             last_name=user_data.last_name,
-            role=user_data.role,
-            class_id=user_data.class_id
+            role=user_data.role
         )
         
         db.add(db_user)
         db.flush()  # Pour obtenir l'ID
-        
-        # Lier l'étudiant à l'utilisateur si nécessaire
-        if user_data.role == UserRole.student.value and user_data.student_id:
-            student = db.query(Student).filter(Student.id == user_data.student_id).first()
-            if student:
-                student.user_id = db_user.id
         
         db.commit()
         db.refresh(db_user)

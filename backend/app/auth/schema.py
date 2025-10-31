@@ -17,7 +17,6 @@ class UserCreate(BaseModel):
     first_name: str
     last_name: str
     role: str = "student"
-    class_id: Optional[int] = None
     
     @field_validator('password')
     @classmethod
@@ -55,7 +54,6 @@ class UserResponse(BaseModel):
     last_name: str
     role: str
     is_active: bool
-    class_id: Optional[int] = None
     created_at: datetime
 
 class Token(BaseModel):

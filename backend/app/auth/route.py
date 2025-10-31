@@ -61,15 +61,3 @@ def deactivate_user(
     db.commit()
     
     return {"message": "User deactivated successfully"}
-
-# Ajouter cette route
-@router.get("/students/available")
-def get_available_students(
-    class_id: Optional[int] = None,
-    db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(require_teacher_or_admin)
-):
-    """Récupère les étudiants disponibles pour création de compte"""
-    from ..services.student_service import StudentService
-    students = StudentService.get_students_without_account(db, class_id)
-    return students
