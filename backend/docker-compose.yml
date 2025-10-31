@@ -19,6 +19,8 @@ services:
       - "traefik.http.routers.app.rule=Host(`attendance.localhost`)"
     networks:
       - web
+    # volumes:
+    #   - ./app:/app/app  # Hot reload pour le développement
 
   db:
     image: postgres:16
@@ -28,7 +30,9 @@ services:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data  # Volume persistant
+      - ./backups:/backups  # Dossier pour les sauvegardes
+      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - 5432:5432
     networks:

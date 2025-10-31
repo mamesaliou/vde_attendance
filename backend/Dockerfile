@@ -8,6 +8,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # Copy project files
 COPY pyproject.toml ./
 
+# Installer les dépendances
+# RUN uv sync --frozen --no-dev 
+
 # Install dependencies (simplifié sans hatchling)
 RUN uv pip install --system -r pyproject.toml
 

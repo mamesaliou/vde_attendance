@@ -2,41 +2,25 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from datetime import date
 from typing import List, Optional
-from .. schemas import schemas
-from .. models import models
-from .. database.database import get_db
+from ..database.database import get_db
+from ..schemas.schemas import Attendance, AttendanceCreate, AttendanceUpdate, AttendanceWithStudent
+from ..services.attendance_service import AttendanceService
 
 router = APIRouter()
 
-@router.post("/", response_model=schemas.Attendance)
-def create_attendance(attendance: schemas.AttendanceCreate, db: Session = Depends(get_db)):
-    # Check if student exists
-    student = db.query(models.Student).filter(models.Student.id == attendance.student_id).first()
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
-    
-    # Check if class exists
-    class_ = db.query(models.Class).filter(models.Class.id == attendance.class_id).first()
-    if not class_:
-        raise HTTPException(status_code=404, detail="Class not found")
-    
-    # Check if attendance already exists for this student/date/class
-    existing = db.query(models.Attendance).filter(
-        models.Attendance.student_id == attendance.student_id,
-        models.Attendance.class_id == attendance.class_id,
-        models.Attendance.date == attendance.date
-    ).first()
-    
-    if existing:
-        raise HTTPException(status_code=400, detail="Attendance already recorded for this date")
-    
-    db_attendance = models.Attendance(**attendance.dict())
-    db.add(db_attendance)
-    db.commit()
-    db.refresh(db_attendance)
-    return db_attendance
+@router.post("/", response_model=Attendance)
+def create_attendance(attendance: AttendanceCreate, db: Session = Depends(get_db)):
+    result = AttendanceService.record_attendance(db, attendance)
+    if result is None:
+        raise HTTPException(status_code=400, detail="Attendance already exists for this date")
+    return result
 
-@router.get("/", response_model=List[schemas.AttendanceWithStudent])
+@router.post("/bulk")
+def create_bulk_attendance(attendances: List[AttendanceCreate], db: Session = Depends(get_db)):
+    results = AttendanceService.record_bulk_attendance(db, attendances)
+    return results
+
+@router.get("/", response_model=List[AttendanceWithStudent])
 def read_attendances(
     class_id: Optional[int] = None,
     student_id: Optional[int] = None,
@@ -45,46 +29,43 @@ def read_attendances(
     limit: int = 100,
     db: Session = Depends(get_db)
 ):
-    query = db.query(models.Attendance).join(models.Student)
+    # Implémentation de la recherche filtrée
+    query = db.query(Attendance).join(Attendance.student)
     
     if class_id:
-        query = query.filter(models.Attendance.class_id == class_id)
+        query = query.filter(Attendance.class_id == class_id)
     if student_id:
-        query = query.filter(models.Attendance.student_id == student_id)
+        query = query.filter(Attendance.student_id == student_id)
     if attendance_date:
-        query = query.filter(models.Attendance.date == attendance_date)
+        query = query.filter(Attendance.date == attendance_date)
     
-    return query.offset(skip).limit(limit).all()
+    attendances = query.offset(skip).limit(limit).all()
+    
+    return [AttendanceWithStudent(
+        **attendance.__dict__,
+        student=attendance.student
+    ) for attendance in attendances]
 
 @router.get("/class/{class_id}/date/{attendance_date}")
 def read_class_attendance(class_id: int, attendance_date: date, db: Session = Depends(get_db)):
-    """Get attendance for all students in a class on a specific date"""
-    # Get all students in the class
-    students = db.query(models.Student).filter(models.Student.class_id == class_id).all()
-    
-    # Get existing attendance records
-    attendances = db.query(models.Attendance).filter(
-        models.Attendance.class_id == class_id,
-        models.Attendance.date == attendance_date
-    ).all()
-    
-    attendance_dict = {att.student_id: att for att in attendances}
-    
-    result = []
-    for student in students:
-        attendance = attendance_dict.get(student.id)
-        result.append({
-            "student": student,
-            "attendance": attendance,
-            "present": attendance.present if attendance else None,
-            "reason": attendance.reason if attendance else None
-        })
-    
-    return result
+    return AttendanceService.get_attendance_by_date_class(db, class_id, attendance_date)
 
-@router.put("/{attendance_id}", response_model=schemas.Attendance)
-def update_attendance(attendance_id: int, attendance: schemas.AttendanceUpdate, db: Session = Depends(get_db)):
-    db_attendance = db.query(models.Attendance).filter(models.Attendance.id == attendance_id).first()
+@router.get("/student/{student_id}/history")
+def read_student_attendance_history(
+    student_id: int,
+    start_date: date,
+    end_date: date,
+    db: Session = Depends(get_db)
+):
+    return AttendanceService.get_student_attendance_history(db, student_id, start_date, end_date)
+
+@router.get("/stats/daily")
+def get_daily_stats(class_id: int, attendance_date: date, db: Session = Depends(get_db)):
+    return AttendanceService.get_daily_attendance_stats(db, class_id, attendance_date)
+
+@router.put("/{attendance_id}", response_model=Attendance)
+def update_attendance(attendance_id: int, attendance: AttendanceUpdate, db: Session = Depends(get_db)):
+    db_attendance = db.query(Attendance).filter(Attendance.id == attendance_id).first()
     if db_attendance is None:
         raise HTTPException(status_code=404, detail="Attendance record not found")
     
@@ -94,20 +75,3 @@ def update_attendance(attendance_id: int, attendance: schemas.AttendanceUpdate, 
     db.commit()
     db.refresh(db_attendance)
     return db_attendance
-
-@router.post("/bulk")
-def create_bulk_attendance(attendances: List[schemas.AttendanceCreate], db: Session = Depends(get_db)):
-    """Create multiple attendance records at once"""
-    created = []
-    errors = []
-    
-    for attendance in attendances:
-        try:
-            db_attendance = models.Attendance(**attendance.dict())
-            db.add(db_attendance)
-            created.append(attendance)
-        except Exception as e:
-            errors.append({"student_id": attendance.student_id, "error": str(e)})
-    
-    db.commit()
-    return {"created": len(created), "errors": errors}
