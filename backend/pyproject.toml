@@ -1,6 +1,7 @@
 [project]
 name = "school-attendance"
 version = "0.1.0"
+requires-python = ">=3.11"
 description = "Système de gestion des présences scolaire"
 authors = [
     {name = "Votre Nom", email = "votre@email.com"},
