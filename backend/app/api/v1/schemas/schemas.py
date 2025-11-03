@@ -3,12 +3,6 @@ from typing import Optional
 from datetime import datetime
 import re
 
-class UserBase(BaseModel):
-    email: EmailStr
-    username: str
-    first_name: str
-    last_name: str
-    role: str
 
 class UserCreate(BaseModel):
     email: EmailStr

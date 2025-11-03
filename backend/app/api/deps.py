@@ -6,7 +6,7 @@ from typing import Optional
 import os
 from datetime import datetime, timedelta
 from ..database.database import get_db
-from ..models.user import User
+from ..database.models.user import User
 from ..models.role import UserRole
 from ..api.v1.schemas.schemas import TokenData
 from passlib.context import CryptContext
@@ -14,6 +14,8 @@ from passlib.context import CryptContext
 
 # Configuration JWT
 SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY environment variable is required")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
