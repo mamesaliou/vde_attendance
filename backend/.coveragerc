@@ -1,0 +1,4 @@
+[run]
+omit =
+    */tests_pre_start.py
+    

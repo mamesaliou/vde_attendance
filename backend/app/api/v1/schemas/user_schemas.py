@@ -1,8 +1,20 @@
 from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
+from enum import Enum
 from typing import Optional
 from datetime import datetime
 import re
 
+class UserRole(Enum):
+    student = "student"
+    teacher = "teacher"
+    admin = "admin"
+
+class UserBase(BaseModel):
+    email: EmailStr
+    username: str
+    first_name: str
+    last_name: str
+    role: str
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -16,13 +28,13 @@ class UserCreate(BaseModel):
     @classmethod
     def validate_password(cls, v):
         if len(v) < 8:
-            raise ValueError('Le mot de passe doit contenir au moins 8 caractères')
+            raise ValueError('Password too weak : the password must content less of 8 bit.')
         if not re.search(r'[A-Z]', v):
-            raise ValueError('Le mot de passe doit contenir au moins une majuscule')
+            raise ValueError('he password must content less of a uppercase letter')
         if not re.search(r'[a-z]', v):
-            raise ValueError('Le mot de passe doit contenir au moins une minuscule')
+            raise ValueError('The password must content less of a lowercase letter')
         if not re.search(r'[0-9]', v):
-            raise ValueError('Le mot de passe doit contenir au moins un chiffre')
+            raise ValueError('The password must content less of a digit')
         return v
     
     @field_validator('username')

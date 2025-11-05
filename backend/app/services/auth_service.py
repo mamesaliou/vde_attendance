@@ -1,9 +1,13 @@
 from sqlalchemy.orm import Session
+from fastapi.responses import JSONResponse
 from fastapi import HTTPException, status
-from ..database.models.user import User, UserRole
-from ..api.v1.schemas.schemas import UserCreate, UserLogin
-from ..api.deps import get_password_strength, verify_password, get_password_hash, create_access_token
+from fastapi import Depends, HTTPException, status, Response
+from sqlalchemy.orm import Session
 from datetime import timedelta
+from ..database.models.user_model import User, UserRole
+from ..api.v1.schemas.user_schemas import UserCreate, UserLogin, UserResponse
+from ..api.deps import add_to_blacklist, get_password_strength, verify_password, get_password_hash, create_access_token, require_admin, verify_token
+from ..database.database import get_db
 
 class AuthService:
     @staticmethod
@@ -94,3 +98,69 @@ class AuthService:
             "token_type": "bearer",
             "user": user
         }
+    
+    @staticmethod
+    def list_users(
+        skip: int = 0,
+        limit: int = 100,
+        db: Session = Depends(get_db),
+        current_user: UserResponse = Depends(require_admin)
+    ):
+        users = db.query(User).offset(skip).limit(limit).all()
+        return users
+
+    @staticmethod
+    def deactive_user(
+        user_id: int,
+        db: Session = Depends(get_db),
+        current_user: UserResponse = Depends(require_admin)
+    ):
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user.is_active = False
+        db.commit()
+        
+        return {"message": "User deactivated successfully"}
+    
+    @staticmethod
+    def logout_by_cookies(response: Response):
+        # Supprimer les cookies d'authentification
+        response.delete_cookie(key="access_token")
+        response.delete_cookie(key="refresh_token")
+        
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"message": "Déconnexion réussie"}
+        )        
+
+    @staticmethod
+    def logout_by_token(token: str, current_user: UserResponse):
+        try:
+            
+
+            #get_current_token(token)
+
+            #Verifier si le token est dans la blackliste
+            verify_token(token)
+
+            # Ajouter le token à la blacklist
+            add_to_blacklist(token.credentials)
+            
+            # Logger la déconnexion
+            # print(f"Utilisateur {current_user.get('sub', 'Unknown')} déconnecté")
+            print(f"Utilisateur {current_user.first_name} {current_user.last_name} est déconnecté")
+
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "message": "Déconnexion réussie",
+                    "detail": "Le token a été invalidé"
+                }
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Erreur lors de la déconnexion: {str(e)}"
+            )

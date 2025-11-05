@@ -42,8 +42,8 @@ Thumbs.db
 *.log
 logs/
 
-# Docker
-docker-compose.override.yml
+# # Docker
+# docker-compose.override.yml
 
 pg_data
 .DS_Store
