@@ -1,0 +1,51 @@
+services:
+  
+  db:
+    image: postgres:16
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES status_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Volume persistant
+      - ./backups:/backups  # Dossier pour les sauvegardes
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - 5432:5432
+    networks:
+      - web
+
+  app:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - BD_HOST=${POSTGRES_HOST}
+      - BD_PORT=${POSTGRES_PORT}
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - BD_PASSWORD=${POSTGRES_PASSWORD}
+    networks:
+      - web
+    # volumes:
+    #   - ./app:/app/app  # Hot reload pour le développement
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    ports:
+      - "8080:8080" 
+    networks:
+      - web
+
+networks:
+  web:
+
+volumes:
+  postgres_data:
