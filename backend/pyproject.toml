@@ -1,7 +1,7 @@
 [project]
 name = "school-attendance"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 description = "Système de gestion des présences scolaire"
 authors = [
     {name = "Votre Nom", email = "votre@email.com"},
@@ -10,6 +10,7 @@ dependencies = [
     "fastapi>=0.104.0",
     "uvicorn>=0.24.0",
     "sqlalchemy>=2.0.0",
+    "sqlmodel>=0.0.22",
     "alembic>=1.12.0",
     "psycopg2-binary>=2.9.0",
     "python-multipart>=0.0.6",
@@ -19,6 +20,7 @@ dependencies = [
     "passlib[argon2]>=1.7.4",
     "python-dotenv>=1.0.0",
     "email-validator>=2.0.0",
+    "tenacity>=8.2.3",
 ]
 
 [project.optional-dependencies]
@@ -31,6 +33,7 @@ test = [
     "Faker>=18.0.0",
     "factory-boy>=3.2.0",
 ]
+
 
 [build-system]
 requires = ["setuptools>=45", "wheel"]

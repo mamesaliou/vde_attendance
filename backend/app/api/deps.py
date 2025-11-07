@@ -6,9 +6,9 @@ from typing import Optional
 import os
 from datetime import datetime, timedelta
 from ..database.database import get_db
-from ..database.models.user import User
-from ..models.role import UserRole
-from ..api.v1.schemas.schemas import TokenData
+from ..database.models.user_model import User
+from app.api.v1.schemas.user_schemas import UserRole
+from .v1.schemas.user_schemas import TokenData
 from passlib.context import CryptContext
 
 
@@ -22,7 +22,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 security = HTTPBearer()
 
 # Configuration du hachage des mots de passe
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt", "argon2"], deprecated="auto")
+
+# Simule une blacklist en mémoire (en production, utilisez Redis ou DB)
+token_blacklist = set()
 
 def get_password_strength(password: str) -> dict:
     """
@@ -76,13 +79,44 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
             to_encode[key] = value.value
     
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+def verify_token(token: str = Depends(security)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        # Vérifier si le token est dans la blacklist
+        if token.credentials in token_blacklist:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token revoked"
+            )
+        
+        payload = jwt.decode(token.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except JWTError:
+        raise credentials_exception
+
+def get_current_token(token: dict = Depends(verify_token)):
+    return token
+
+def add_to_blacklist(token: str):
+    """Ajouter un token à la blacklist"""
+    token_blacklist.add(token)
+
+def show_blacklist():
+    # Affiche le contenu du set
+    return list(token_blacklist)
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -166,3 +200,4 @@ def require_same_class_or_teacher(class_id: int, current_user: User = Depends(ge
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Access denied to this class"
     )
+

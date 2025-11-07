@@ -1,15 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi.security import OAuth2PasswordRequestForm, HTTPBearer
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
-
 from ....database.database import get_db
-from ..schemas.schemas import UserCreate, UserResponse, Token, UserLogin
+from ..schemas.user_schemas import UserCreate, UserResponse, Token, UserLogin
 from ....services.auth_service import AuthService
 from ...deps import get_current_active_user, require_admin, require_teacher_or_admin
-from ....database.models.user import User
+from ....database.models.user_model import User
 
 router = APIRouter()
+security = HTTPBearer()
 
 @router.post("/register", response_model=UserResponse)
 def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
@@ -20,6 +21,20 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
 def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
     """Connexion d'un utilisateur"""
     return AuthService.login_user(db, login_data)
+
+@router.post("/logoutbc", response_model=Token)
+async def logout_by_cookies(response: Response):
+    """Route de déconnexion avec suppression des cookies"""
+    return AuthService.logout_by_cookies(response)
+    
+
+@router.post("/logoutbt", response_model=Token)
+def logout_by_token(
+    token: str = Depends(security),
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """Route de déconnexion avec invalidation du token JWT"""
+    return AuthService.logout_by_token(token, current_user)
 
 @router.post("/token", response_model=Token)
 def login_for_access_token(
@@ -43,8 +58,7 @@ def list_users(
     current_user: UserResponse = Depends(require_admin)
 ):
     """Liste tous les utilisateurs (admin seulement)"""
-    users = db.query(User).offset(skip).limit(limit).all()
-    return users
+    return AuthService.list_users(skip, limit, db, current_user)
 
 @router.put("/users/{user_id}/deactivate")
 def deactivate_user(
@@ -53,11 +67,4 @@ def deactivate_user(
     current_user: UserResponse = Depends(require_admin)
 ):
     """Désactive un utilisateur (admin seulement)"""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    user.is_active = False
-    db.commit()
-    
-    return {"message": "User deactivated successfully"}
+    return AuthService.deactive_user(user_id, db, current_user)

@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -6,16 +6,21 @@ WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Copy project files
-COPY pyproject.toml ./
+COPY pyproject.toml uv.lock alembic.ini .coveragerc ./
 
-# Installer les dépendances
+# # Installer les dépendances
 # RUN uv sync --frozen --no-dev 
 
 # Install dependencies (simplifié sans hatchling)
 RUN uv pip install --system -r pyproject.toml
 
+# Installer les dépendances de test (optionnelles)
+RUN uv pip install --system ".[test]"
+
 # Copy application code
-COPY app/ ./app/
+COPY ./scripts /app/scripts
+COPY ./app/ /app/app
+COPY ./tests /app/tests
 
 # Expose port
 EXPOSE 8000
