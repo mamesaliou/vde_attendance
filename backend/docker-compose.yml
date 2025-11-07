@@ -21,14 +21,15 @@ services:
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_DB=school_attendance
-      - POSTGRES status_USER=user
+      - POSTGRES_USER=user
+      #- POSTGRES status_USER=user
       - POSTGRES_PASSWORD=password
     volumes:
       - postgres_data:/var/lib/postgresql/data  # Volume persistant
       - ./backups:/backups  # Dossier pour les sauvegardes
       # - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - 5432:5432
+      - "5433:5432"  # Le port 5432 de mon ordi est occupé donc j'expose le port 5432 du conteneur sur le port 5433 de ma machine
     networks:
       - web
 

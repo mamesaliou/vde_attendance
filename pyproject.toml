@@ -1,0 +1,10 @@
+[project]
+name = "vde-attendance"
+version = "0.1.0"
+requires-python = ">=3.13"
+description = "Add your description here"
+readme = "README.md"
+dependencies = [
+    "fastapi>=0.121.0",
+    "sqlalchemy>=2.0.44",
+]
