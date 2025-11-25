@@ -1,9 +1,18 @@
+import sys
+from pathlib import Path
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+
+# Ajouter le répertoire racine au Python path pour importer les modules de l'app
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Import des modèles et configuration
+from app.database.models.base import Base
+from app.core.config import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -16,9 +25,10 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
+
+# Utiliser la même URL de base de données que FastAPI
+config.set_main_option("sqlalchemy.url", settings.CONNECTION_STRING)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -38,7 +48,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = config.get_main_option("sqlalchemy.url") or settings.CONNECTION_STRING
     context.configure(
         url=url,
         target_metadata=target_metadata,

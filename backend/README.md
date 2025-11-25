@@ -1,115 +1,35 @@
-# Presence_App
-# School Attendance Management System - BACKEND
+# VDE Attendance - Backend
 
-Une application FastAPI pour gérer les présences des élèves dans une école.
+Application FastAPI pour la gestion des présences scolaires.
 
-## 🚀 Fonctionnalités
-
-- Enregistrement en tant user
-- Connection avec identifiant
-
-## 🛠️ Installation
-
-### Prérequis
-- Docker et Docker Compose
-- Python 3.11+ (pour le développement)
-
-### Démarrage rapide
+## Installation
 
 ```bash
 # Cloner le projet
-git clone <votre-repo>
-cd vde_attendance
-
-# Démarrer avec Docker
-docker-compose up -d --build
-
-# L'application sera disponible sur:
-# API: http://attendance.localhost
-# Traefik Dashboard: http://localhost:8080
-
-# ✅Alternative hors Docker :
-# Placez-vous dans le dossier backend :
+git clone https://github.com/ALYCIS/vde_attendance.git
 cd vde_attendance/backend
 
-# Puis lancez le serveur FastAPI avec Uvicorn :
-python -m uvicorn app.main:app --reload
+python -m venv venv
+venv\Scripts\activate
 
+pip install uv
+
+uv sync
+
+cp .env.example .env
+uv run alembic upgrade head
+
+uv run main.py
 ```
-# API Reference
-> Base URL: `http://127.0.0.1:8000`
 
-## Accédez à la documentation Swagger :
-> Docs URL: `http://127.0.0.1:8000/docs`
-## Authentication
+## Docker
 
-
-
-### Register User
-```http
-POST /api/auth/register
+```bash
+docker-compose up -d
 ```
-| Parameter  | Type     | Description              |
-| :--------- | :------- | :----------------------- |
-| `email`    | `string` | **Required**. User email |
-| `password` | `string` | **Required**. Password   |
 
-### Login User
-```http
-POST /api/auth/login
-```
-| Parameter  | Type     | Description              |
-| :--------- | :------- | :----------------------- |
-| `email`    | `string` | **Required**. User email |
-| `password` | `string` | **Required**. Password   |
+## API
 
-### Login Pour l'Access Token
-```http
-POST /api/auth/token
-```
-| Parameter  | Type     | Description                     |
-| :--------- | :------- | :------------------------------ |
-| `username` | `string` | **Required**. Username or email |
-| `password` | `string` | **Required**. Password          |
-
-### Read Current User
-```http
-GET /api/auth/me
-```
-| Header          | Type     | Description                       |
-| :-------------- | :------- | :-------------------------------- |
-| `Authorization` | `string` | **Required**. Bearer access token |
-
-
-### List Users
-```http
-GET /api/auth/users
-```
-GET /api/auth/users
-
-
-### Déactiver User
-```http
-PUT /api/auth/users/{user_id}/deactivate
-```
-| Parameter | Type     | Description                  |
-| :-------- | :------- | :--------------------------- |
-| `user_id` | `string` | **Required**. ID of the user |
-| Header    | `string` | **Required**. Bearer token   |
-
-
-### Lister tous les Items
-```http
-GET /api/items
-```
-| Parameter | Type     | Description                |
-| :-------- | :------- | :------------------------- |
-| `api_key` | `string` | **Required**. Your API key |
-
-### Aficher un Item via son ID
-```http
-GET /api/items/${id}
-```
-| Parameter | Type     | Description                  |
-| :-------- | :------- | :--------------------------- |
-| `id`      | `string` | **Required**. ID of the item |
+- **API** : http://localhost:8000
+- **Documentation** : http://localhost:8000/docs
+- **PostgreSQL** : localhost:5433
