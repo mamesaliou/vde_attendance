@@ -14,6 +14,7 @@ lib/
 lib64/
 parts/
 sdist/
+secrets/private_key.pem
 var/
 wheels/
 *.egg-info/
@@ -22,7 +23,8 @@ wheels/
 # Virtual Environment
 .env
 .venv
-env/
+.tox/
+.ruff_cache/
 venv/
 ENV/
 

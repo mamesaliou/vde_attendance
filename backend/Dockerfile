@@ -1,24 +1,31 @@
 FROM python:3.11-slim
 
+RUN groupadd -r authuser && useradd -r -g authuser -m -d /home/authuser authuser
+
 WORKDIR /app
 
-# Install uv for fast dependency management
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy project files
-COPY pyproject.toml ./
+RUN pip install --no-cache-dir uv
 
-# Installer les dépendances
-# RUN uv sync --frozen --no-dev 
+COPY --chown=authuser:authuser . .
 
-# Install dependencies (simplifié sans hatchling)
-RUN uv pip install --system -r pyproject.toml
+RUN rm -rf .git .idea .venv __pycache__ build dist *.pyc *.pyo *.egg-info
 
-# Copy application code
-COPY app/ ./app/
+RUN uv pip install --system -e .
 
-# Expose port
+USER authuser
+
 EXPOSE 8000
 
-# Start application
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENV PORT=8000
+ENV WORKERS=1
+ENV LOG_LEVEL=INFO
+ENV LOG_DIRECTORY=/var/log/auth
+
+RUN chmod +x ./scripts/entrypoint.sh
+
+ENTRYPOINT ["./scripts/entrypoint.sh"]
