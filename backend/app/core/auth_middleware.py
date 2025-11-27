@@ -18,8 +18,8 @@ async def verify_token(request: Request, call_next):
     if request.method == "OPTIONS":
         return await call_next(request)
 
-    # if not auth_header and any(path.startswith(public_path) for public_path in settings.PUBLIC_ENDPOINTS):
-    #     return await call_next(request)
+    #if not auth_header and any(path.startswith(public_path) for public_path in settings.PUBLIC_ENDPOINTS):
+    #    return await call_next(request)
 
     if any(path.startswith(public_path) for public_path in settings.PUBLIC_ENDPOINTS):
         return await call_next(request)

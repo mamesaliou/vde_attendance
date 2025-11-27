@@ -3,7 +3,7 @@ from fastapi.security import APIKeyHeader, OAuth2PasswordBearer, HTTPBearer, HTT
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 from starlette.types import ASGIApp
-from app.core.config import get_settings
+from app.core.config import settings
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 oauth2_scheme = OAuth2PasswordBearer(
@@ -32,11 +32,10 @@ security_basic_auth = HTTPBasic(
 
 class SecurityMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp):
-        self.settings = get_settings()
         super().__init__(app)
 
     async def dispatch(self, request, call_next):
-        if not request.url.scheme == "https" and not self.settings.DEBUG:
+        if not request.url.scheme == "https" and not settings.DEBUG:
             return Response(
                 status_code=status.HTTP_301_MOVED_PERMANENTLY,
                 headers={"Location": str(request.url).replace("http://", "https://", 1)}
@@ -44,7 +43,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
         response = await call_next(request)
 
-        if not self.settings.DEBUG:
+        if not settings.DEBUG:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE"

@@ -14,7 +14,7 @@ class UserRole(Enum):
 class BackendSettings(BaseSettings):
 
     CONNECTION_STRING: str = os.getenv("DATABASE_URL", "sqlite:///./user_database.db")
-    DEBUG: bool = False if os.path.exists('.env') else True
+    DEBUG: bool =  os.getenv("DEBUG", "False").lower().startswith(("true", "1", "t"))  # Convert string to bool
 
     USER_TOKEN_PREFIX: str = "user_token_"
     USER_DATA_PREFIX: str = "user_data_"
@@ -47,6 +47,7 @@ class BackendSettings(BaseSettings):
     MAX_FILE_SIZE: int = 5 * 1024 * 1024
     
     PUBLIC_ENDPOINTS: ClassVar[List[str]] = [
+        "/",
         "/api/v1/health",  
         "/docs",         
         "/redoc",   
@@ -121,8 +122,8 @@ class BackendSettings(BaseSettings):
 
     class Config:
         case_sensitive = True
-        env_file = ".env.example" if os.path.exists(".env.example") else ".env"
-        env_prefix = "APP_SOLUTIONS_"
+        env_file = ".env" if os.path.exists(".env") else ".env.example"
+        #env_prefix = "APP_SOLUTIONS_"
         validate_default = True
         extra = "ignore"
 
